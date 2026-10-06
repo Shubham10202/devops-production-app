@@ -6,40 +6,78 @@ on:
     types:
       - completed
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            set -e
+          role-to-assume: arn:aws:iam::191239450128:role/GitHubActions-EC2-SSM-Deploy
+          aws-region: ap-south-1
+          role-session-name: GitHubActions-Deploy
 
-            echo "Pulling latest Docker image..."
-            docker pull ghcr.io/shubham10202/devops-production-app:latest
+      - name: Deploy to EC2 using SSM
+        run: |
+          set -e
 
-            echo "Stopping old container..."
-            docker rm -f devops-app || true
+          echo "Sending deployment command to EC2..."
 
-            echo "Starting new container..."
-            docker run -d \
-              --name devops-app \
-              --restart unless-stopped \
-              -p 80:8080 \
-              -e APP_ENV=production \
-              -e APP_PORT=8080 \
-              ghcr.io/shubham10202/devops-production-app:latest
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids i-0e6780fc6fa302f26 \
+            --document-name AWS-RunShellScript \
+            --parameters 'commands=[
+              "set -e",
+              "echo Pulling latest Docker image...",
+              "docker pull ghcr.io/shubham10202/devops-production-app:latest",
+              "echo Stopping old container...",
+              "docker rm -f devops-app || true",
+              "echo Starting new container...",
+              "docker run -d --name devops-app --restart unless-stopped -p 80:8080 -e APP_ENV=production -e APP_PORT=8080 ghcr.io/shubham10202/devops-production-app:latest",
+              "echo Waiting for application...",
+              "sleep 5",
+              "echo Running health check...",
+              "curl --fail http://localhost/health",
+              "echo Deployment successful!"
+            ]' \
+            --query 'Command.CommandId' \
+            --output text)
 
-            echo "Waiting for application..."
+          echo "SSM Command ID: $COMMAND_ID"
+
+          for i in {1..30}; do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id i-0e6780fc6fa302f26 \
+              --query 'Status' \
+              --output text)
+
+            echo "SSM status: $STATUS"
+
+            case "$STATUS" in
+              Success)
+                echo "Deployment successful!"
+                exit 0
+                ;;
+              Failed|Cancelled|TimedOut|Cancelling)
+                echo "Deployment failed."
+                aws ssm get-command-invocation \
+                  --command-id "$COMMAND_ID" \
+                  --instance-id i-0e6780fc6fa302f26 \
+                  --query '{Status:Status,Output:StandardOutputContent,Error:StandardErrorContent}' \
+                  --output json
+                exit 1
+                ;;
+            esac
+
             sleep 5
+          done
 
-            echo "Running health check..."
-            curl --fail http://localhost/health
-
-            echo "Deployment successful!"
+          echo "Deployment timed out."
+          exit 1
