@@ -10,36 +10,36 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-south-1"
+  region = var.aws_region
 }
 
 resource "aws_instance" "devops_server" {
-  ami           = "ami-01a00762f46d584a1"
-  instance_type = "t3.micro"
+  ami           = var.ami_id
+  instance_type = var.instance_type
 
   tags = {
-    Name = "devops-production-server"
+    Name = var.ec2_name
   }
 }
 
 resource "aws_security_group" "devops_sg" {
-  name        = "devops-production-sg"
-  description = "Security group for DevOps production application - SSH administration and HTTP web access"
-  vpc_id      = "vpc-042ccee5a2bd90830"
+  name        = var.security_group_name
+  description = var.security_group_description
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "Public web access for DevOps application"
-    from_port   = 80
-    to_port     = 80
+    from_port   = var.web_port
+    to_port     = var.web_port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    from_port   = 22
-    to_port     = 22
+    from_port   = var.ssh_port
+    to_port     = var.ssh_port
     protocol    = "tcp"
-    cidr_blocks = ["114.143.208.34/32"]
+    cidr_blocks = [var.ssh_cidr]
   }
 
   egress {
@@ -50,6 +50,6 @@ resource "aws_security_group" "devops_sg" {
   }
 
   tags = {
-    Name = "devops-production-sg"
+    Name = var.security_group_name
   }
 }
