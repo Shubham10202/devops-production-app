@@ -13,43 +13,16 @@ provider "aws" {
   region = var.aws_region
 }
 
-resource "aws_instance" "devops_server" {
-  ami           = var.ami_id
-  instance_type = var.instance_type
+module "ec2" {
+  source = "./modules/ec2"
 
-  tags = {
-    Name = var.ec2_name
-  }
-}
-
-resource "aws_security_group" "devops_sg" {
-  name        = var.security_group_name
-  description = var.security_group_description
-  vpc_id      = data.aws_vpc.existing.id
-
-  ingress {
-    description = "Public web access for DevOps application"
-    from_port   = var.web_port
-    to_port     = var.web_port
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = var.ssh_port
-    to_port     = var.ssh_port
-    protocol    = "tcp"
-    cidr_blocks = [var.ssh_cidr]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = var.security_group_name
-  }
+  ami_id                     = var.ami_id
+  instance_type              = var.instance_type
+  ec2_name                   = var.ec2_name
+  vpc_id                     = data.aws_vpc.existing.id
+  security_group_name        = var.security_group_name
+  security_group_description = var.security_group_description
+  web_port                   = var.web_port
+  ssh_port                   = var.ssh_port
+  ssh_cidr                   = var.ssh_cidr
 }

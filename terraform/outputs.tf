@@ -1,11 +1,11 @@
 output "ec2_instance_id" {
-  description = "ID of the DevOps EC2 instance"
-  value       = aws_instance.devops_server.id
+  description = "ID of the EC2 instance"
+  value       = module.ec2.ec2_instance_id
 }
 
 output "security_group_id" {
-  description = "ID of the DevOps Security Group"
-  value       = aws_security_group.devops_sg.id
+  description = "ID of the Security Group"
+  value       = module.ec2.security_group_id
 }
 
 output "aws_region" {
