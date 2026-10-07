@@ -61,7 +61,7 @@ jobs:
       - name: Terraform plan
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         working-directory: terraform
-        run: terraform plan -input=false -no-color
+        run: terraform plan -input=false -no-color -var-file=terraform-ci.tfvars.example
 
       - name: Set up Python
         uses: actions/setup-python@v5

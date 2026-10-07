@@ -37,13 +37,3 @@ variable "web_port" {
   type        = number
   description = "HTTP port"
 }
-
-variable "ssh_port" {
-  type        = number
-  description = "SSH port"
-}
-
-variable "ssh_cidr" {
-  type        = string
-  description = "Allowed SSH source IP"
-}

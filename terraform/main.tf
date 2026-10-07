@@ -23,6 +23,4 @@ module "ec2" {
   security_group_name        = var.security_group_name
   security_group_description = var.security_group_description
   web_port                   = var.web_port
-  ssh_port                   = var.ssh_port
-  ssh_cidr                   = var.ssh_cidr
 }

@@ -19,14 +19,6 @@ resource "aws_security_group" "this" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  ingress {
-    from_port   = var.ssh_port
-    to_port     = var.ssh_port
-    protocol    = "tcp"
-    cidr_blocks = [var.ssh_cidr]
-  }
-
   egress {
     from_port   = 0
     to_port     = 0

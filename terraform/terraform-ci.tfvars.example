@@ -1,0 +1,8 @@
+aws_region                 = "ap-south-1"
+ami_id                     = "ami-01a00762f46d584a1"
+instance_type              = "t3.micro"
+ec2_name                   = "devops-production-server"
+vpc_id                     = "vpc-042ccee5a2bd90830"
+security_group_name        = "devops-production-sg"
+security_group_description = "Security group for DevOps production application - SSH administration and HTTP web access"
+web_port                   = 80
