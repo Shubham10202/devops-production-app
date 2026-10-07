@@ -25,7 +25,7 @@ resource "aws_instance" "devops_server" {
 resource "aws_security_group" "devops_sg" {
   name        = var.security_group_name
   description = var.security_group_description
-  vpc_id      = var.vpc_id
+  vpc_id      = data.aws_vpc.existing.id
 
   ingress {
     description = "Public web access for DevOps application"
